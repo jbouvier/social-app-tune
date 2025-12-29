@@ -28,6 +28,7 @@ let PostMenuButton = ({
   timestamp,
   threadgateRecord,
   onShowLess,
+  repostReason,
   hitSlop,
 }: {
   testID: string
@@ -40,6 +41,7 @@ let PostMenuButton = ({
   timestamp: string
   threadgateRecord?: AppBskyFeedThreadgate.Record
   onShowLess?: (interaction: AppBskyFeedDefs.Interaction) => void
+  repostReason?: AppBskyFeedDefs.ReasonRepost
   hitSlop?: Insets
 }): React.ReactNode => {
   const {_} = useLingui()
@@ -87,6 +89,7 @@ let PostMenuButton = ({
             timestamp={timestamp}
             threadgateRecord={threadgateRecord}
             onShowLess={onShowLess}
+            repostReason={repostReason}
           />
         )}
       </Menu.Root>

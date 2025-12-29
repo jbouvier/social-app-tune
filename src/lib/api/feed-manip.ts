@@ -335,6 +335,39 @@ export class FeedTuner {
     return slices
   }
 
+  /**
+   * Removes reposts from specific users based on their DIDs.
+   * @param hiddenUserDids - Array of DIDs whose reposts should be hidden
+   */
+  static removeRepostsFromUsers(hiddenUserDids: string[]) {
+    return (
+      tuner: FeedTuner,
+      slices: FeedViewPostsSlice[],
+      _dryRun: boolean,
+    ): FeedViewPostsSlice[] => {
+      if (hiddenUserDids.length === 0) {
+        return slices
+      }
+
+      const hiddenSet = new Set(hiddenUserDids)
+      for (let i = 0; i < slices.length; i++) {
+        const slice = slices[i]
+        if (slice.isRepost) {
+          const reason = slice._feedPost.reason
+          if (
+            AppBskyFeedDefs.isReasonRepost(reason) &&
+            reason.by?.did &&
+            hiddenSet.has(reason.by.did)
+          ) {
+            slices.splice(i, 1)
+            i--
+          }
+        }
+      }
+      return slices
+    }
+  }
+
   static removeQuotePosts(
     tuner: FeedTuner,
     slices: FeedViewPostsSlice[],

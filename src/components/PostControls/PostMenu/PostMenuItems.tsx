@@ -7,7 +7,7 @@ import {
 } from 'react-native'
 import * as Clipboard from 'expo-clipboard'
 import {
-  type AppBskyFeedDefs,
+  AppBskyFeedDefs,
   AppBskyFeedPost,
   type AppBskyFeedThreadgate,
   AtUri,
@@ -20,6 +20,7 @@ import {useNavigation} from '@react-navigation/native'
 import {DISCOVER_DEBUG_DIDS} from '#/lib/constants'
 import {useOpenLink} from '#/lib/hooks/useOpenLink'
 import {useTranslate} from '#/lib/hooks/useTranslate'
+import {createSanitizedDisplayName} from '#/lib/moderation/create-sanitized-display-name'
 import {getCurrentRoute} from '#/lib/routes/helpers'
 import {makeProfileLink} from '#/lib/routes/links'
 import {
@@ -34,7 +35,11 @@ import {type Shadow} from '#/state/cache/post-shadow'
 import {useProfileShadow} from '#/state/cache/profile-shadow'
 import {useFeedFeedbackContext} from '#/state/feed-feedback'
 import {useLanguagePrefs} from '#/state/preferences'
-import {useHiddenPosts, useHiddenPostsApi} from '#/state/preferences'
+import {
+  useHiddenPosts,
+  useHiddenPostsApi,
+  useHiddenRepostUsersApi,
+} from '#/state/preferences'
 import {usePinnedPostMutation} from '#/state/queries/pinned-post'
 import {
   usePostDeleteMutation,
@@ -54,6 +59,10 @@ import {
 } from '#/state/queries/threadgate'
 import {useRequireAuth, useSession} from '#/state/session'
 import {useMergedThreadgateHiddenReplies} from '#/state/threadgate-hidden-replies'
+import {
+  buildPostSourceKey,
+  useUnstablePostSource,
+} from '#/state/unstable-post-source'
 import * as Toast from '#/view/com/util/Toast'
 import {useDialogControl} from '#/components/Dialog'
 import {useGlobalDialogsControlContext} from '#/components/dialogs/Context'
@@ -98,6 +107,7 @@ let PostMenuItems = ({
   richText,
   threadgateRecord,
   onShowLess,
+  repostReason: repostReasonProp,
 }: {
   testID: string
   post: Shadow<AppBskyFeedDefs.PostView>
@@ -111,6 +121,7 @@ let PostMenuItems = ({
   timestamp: string
   threadgateRecord?: AppBskyFeedThreadgate.Record
   onShowLess?: (interaction: AppBskyFeedDefs.Interaction) => void
+  repostReason?: AppBskyFeedDefs.ReasonRepost
 }): React.ReactNode => {
   const {hasSession, currentAccount} = useSession()
   const {_} = useLingui()
@@ -121,6 +132,8 @@ let PostMenuItems = ({
   const requireSignIn = useRequireAuth()
   const hiddenPosts = useHiddenPosts()
   const {hidePost} = useHiddenPostsApi()
+  const {hideRepostsFromUser, showRepostsFromUser, isRepostHidden} =
+    useHiddenRepostUsersApi()
   const feedFeedback = useFeedFeedbackContext()
   const openLink = useOpenLink()
   const translate = useTranslate()
@@ -139,6 +152,41 @@ let PostMenuItems = ({
   const postUri = post.uri
   const postCid = post.cid
   const postAuthor = useProfileShadow(post.author)
+
+  // Get repost information - prefer prop, fallback to post source
+  const postSourceKey = useMemo(
+    () => buildPostSourceKey(postUri, postAuthor.handle),
+    [postUri, postAuthor.handle],
+  )
+  const postSource = useUnstablePostSource(postSourceKey)
+
+  // Check if this is a repost - use prop first, then fallback to post source
+  const repostReason = useMemo(() => {
+    // Prefer the prop if provided
+    if (repostReasonProp && AppBskyFeedDefs.isReasonRepost(repostReasonProp)) {
+      return repostReasonProp
+    }
+    // Fallback to post source
+    if (
+      postSource?.post.reason &&
+      AppBskyFeedDefs.isReasonRepost(postSource.post.reason)
+    ) {
+      return postSource.post.reason
+    }
+    return undefined
+  }, [repostReasonProp, postSource])
+
+  const reposterDid = repostReason?.by?.did
+  const reposterName = useMemo(() => {
+    if (repostReason?.by) {
+      return createSanitizedDisplayName(repostReason.by, false)
+    }
+    return undefined
+  }, [repostReason])
+  const isRepostFromHiddenUser = reposterDid
+    ? isRepostHidden(reposterDid)
+    : false
+
   const quoteEmbed = useMemo(() => {
     if (!currentAccount || !post.embed) return
     return getMaybeDetachedQuoteEmbed({
@@ -563,6 +611,47 @@ let PostMenuItems = ({
             </Menu.Group>
           </>
         )}
+
+        {hasSession &&
+          reposterDid &&
+          reposterDid !== currentAccount?.did &&
+          reposterName && (
+            <>
+              <Menu.Divider />
+              <Menu.Group>
+                <Menu.Item
+                  testID="postDropdownHideRepostsBtn"
+                  label={
+                    isRepostFromHiddenUser
+                      ? _(msg`Show reposts from ${reposterName}`)
+                      : _(msg`Hide reposts from ${reposterName}`)
+                  }
+                  onPress={() => {
+                    if (isRepostFromHiddenUser) {
+                      showRepostsFromUser({did: reposterDid})
+                      Toast.show(
+                        _(msg`Reposts from ${reposterName} will now be shown`),
+                      )
+                    } else {
+                      hideRepostsFromUser({did: reposterDid})
+                      Toast.show(
+                        _(msg`Reposts from ${reposterName} will now be hidden`),
+                      )
+                    }
+                  }}>
+                  <Menu.ItemText>
+                    {isRepostFromHiddenUser
+                      ? _(msg`Show reposts from ${reposterName}`)
+                      : _(msg`Hide reposts from ${reposterName}`)}
+                  </Menu.ItemText>
+                  <Menu.ItemIcon
+                    icon={isRepostFromHiddenUser ? Eye : EyeSlash}
+                    position="right"
+                  />
+                </Menu.Item>
+              </Menu.Group>
+            </>
+          )}
 
         {hasSession &&
           (canHideReplyForEveryone || canDetachQuote || canHidePostForMe) && (

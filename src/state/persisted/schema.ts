@@ -115,6 +115,11 @@ const schema = z.object({
     step: z.string(),
   }),
   hiddenPosts: z.array(z.string()).optional(), // should move to server
+  /**
+   * Array of DIDs for users whose reposts should be hidden from the feed.
+   * This is a client-side preference stored locally.
+   */
+  hiddenRepostUsers: z.array(z.string()).optional(),
   useInAppBrowser: z.boolean().optional(),
   lastSelectedHomeFeed: z.string().optional(),
   pdsAddressHistory: z.array(z.string()).optional(),
@@ -164,6 +169,7 @@ export const defaults: Schema = {
     step: 'Home',
   },
   hiddenPosts: [],
+  hiddenRepostUsers: [],
   useInAppBrowser: undefined,
   lastSelectedHomeFeed: undefined,
   pdsAddressHistory: [],

@@ -54,6 +54,7 @@ let PostControls = ({
   onShowLess,
   viaRepost,
   variant,
+  repostReason,
 }: {
   big?: boolean
   post: Shadow<AppBskyFeedDefs.PostView>
@@ -69,6 +70,7 @@ let PostControls = ({
   onShowLess?: (interaction: AppBskyFeedDefs.Interaction) => void
   viaRepost?: {uri: string; cid: string}
   variant?: 'compact' | 'normal' | 'large'
+  repostReason?: AppBskyFeedDefs.ReasonRepost
 }): React.ReactNode => {
   const {_} = useLingui()
   const {openComposer} = useOpenComposer()
@@ -327,6 +329,7 @@ let PostControls = ({
           timestamp={post.indexedAt}
           threadgateRecord={threadgateRecord}
           onShowLess={onShowLess}
+          repostReason={repostReason}
           hitSlop={{
             left: secondaryControlSpacingStyles.gap / 2,
           }}

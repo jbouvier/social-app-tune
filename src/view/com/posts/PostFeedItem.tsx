@@ -386,6 +386,9 @@ let FeedItemInner = ({
             threadgateRecord={threadgateRecord}
             onShowLess={onShowLess}
             viaRepost={viaRepost}
+            repostReason={
+              AppBskyFeedDefs.isReasonRepost(reason) ? reason : undefined
+            }
           />
         </View>
 

@@ -4,12 +4,14 @@ import {FeedTuner} from '#/lib/api/feed-manip'
 import {type FeedDescriptor} from '../queries/post-feed'
 import {usePreferencesQuery} from '../queries/preferences'
 import {useSession} from '../session'
+import {useHiddenRepostUsers} from './hidden-repost-users'
 import {useLanguagePrefs} from './languages'
 
 export function useFeedTuners(feedDesc: FeedDescriptor) {
   const langPrefs = useLanguagePrefs()
   const {data: preferences} = usePreferencesQuery()
   const {currentAccount} = useSession()
+  const hiddenRepostUsers = useHiddenRepostUsers()
 
   return useMemo(() => {
     if (feedDesc.startsWith('author')) {
@@ -29,6 +31,12 @@ export function useFeedTuners(feedDesc: FeedDescriptor) {
 
       if (preferences?.feedViewPrefs.hideReposts) {
         feedTuners.push(FeedTuner.removeReposts)
+      } else {
+        // Only apply per-user repost hiding if global hideReposts is disabled
+        const hiddenDids = hiddenRepostUsers || []
+        if (hiddenDids.length > 0) {
+          feedTuners.push(FeedTuner.removeRepostsFromUsers(hiddenDids))
+        }
       }
       if (preferences?.feedViewPrefs.hideReplies) {
         feedTuners.push(FeedTuner.removeReplies)
@@ -48,5 +56,5 @@ export function useFeedTuners(feedDesc: FeedDescriptor) {
       return feedTuners
     }
     return []
-  }, [feedDesc, currentAccount, preferences, langPrefs])
+  }, [feedDesc, currentAccount, preferences, langPrefs, hiddenRepostUsers])
 }
