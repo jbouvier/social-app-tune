@@ -46,6 +46,7 @@ export type CommonNavigatorParams = {
   SavedFeeds: undefined
   PreferencesFollowingFeed: undefined
   HiddenRepostUsersSettings: undefined
+  PowerSettings: undefined
   PreferencesThreads: undefined
   PreferencesExternalEmbeds: undefined
   AccessibilitySettings: undefined

@@ -60,6 +60,7 @@ import {
 } from '#/components/icons/Person'
 import {RaisingHand4Finger_Stroke2_Corner2_Rounded as HandIcon} from '#/components/icons/RaisingHand'
 import {Window_Stroke2_Corner2_Rounded as WindowIcon} from '#/components/icons/Window'
+import {Zap_Stroke2_Corner0_Rounded as ZapIcon} from '#/components/icons/Zap'
 import * as Layout from '#/components/Layout'
 import {Loader} from '#/components/Loader'
 import * as Menu from '#/components/Menu'
@@ -247,6 +248,14 @@ export function SettingsScreen({}: Props) {
             <SettingsList.ItemIcon icon={EarthIcon} />
             <SettingsList.ItemText>
               <Trans>Languages</Trans>
+            </SettingsList.ItemText>
+          </SettingsList.LinkItem>
+          <SettingsList.LinkItem
+            to="/settings/power"
+            label={_(msg`Power Settings`)}>
+            <SettingsList.ItemIcon icon={ZapIcon} />
+            <SettingsList.ItemText>
+              <Trans>Power Settings</Trans>
             </SettingsList.ItemText>
           </SettingsList.LinkItem>
           <SettingsList.PressableItem

@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
+import {useCallback, useEffect, useMemo, useState} from 'react'
 import {Pressable, type StyleProp, View, type ViewStyle} from 'react-native'
 import {type AppBskyActorDefs as ActorDefs} from '@atproto/api'
 import {msg, Trans} from '@lingui/macro'
@@ -19,7 +19,7 @@ import {List} from '#/view/com/util/List'
 import * as Toast from '#/view/com/util/Toast'
 import {atoms as a, useTheme} from '#/alf'
 import {Button, ButtonText} from '#/components/Button'
-import {Check_Stroke2_Corner0_Rounded as CheckIcon} from '#/components/icons/Check'
+import {CheckThick_Stroke2_Corner0_Rounded as CheckIcon} from '#/components/icons/Check'
 import {Trash_Stroke2_Corner0_Rounded as TrashIcon} from '#/components/icons/Trash'
 import * as Layout from '#/components/Layout'
 import * as ProfileCard from '#/components/ProfileCard'
@@ -30,6 +30,145 @@ type Props = NativeStackScreenProps<
   'HiddenRepostUsersSettings'
 >
 
+function Checkbox({checked, onPress}: {checked: boolean; onPress: () => void}) {
+  const t = useTheme()
+  return (
+    <Pressable
+      accessibilityRole="checkbox"
+      accessibilityState={{checked}}
+      onPress={onPress}
+      style={[
+        {
+          width: 24,
+          height: 24,
+          borderRadius: 6,
+          borderWidth: 1,
+        },
+        a.justify_center,
+        a.align_center,
+        checked
+          ? {
+              backgroundColor: t.palette.primary_500,
+              borderColor: t.palette.primary_500,
+            }
+          : {
+              backgroundColor: t.palette.contrast_25,
+              borderColor: t.palette.contrast_100,
+            },
+      ]}>
+      {checked && <CheckIcon width={14} fill={t.palette.white} />}
+    </Pressable>
+  )
+}
+
+function HiddenRepostUserItem({
+  profile,
+  index,
+  isSelected,
+  isSelectionMode,
+  moderationOpts,
+  onToggleSelection,
+  onRemove,
+  isRemoving,
+}: {
+  profile: ActorDefs.ProfileView
+  index: number
+  isSelected: boolean
+  isSelectionMode: boolean
+  moderationOpts: ReturnType<typeof useModerationOpts> | null
+  onToggleSelection: (did: string) => void
+  onRemove: (did: string) => void
+  isRemoving: boolean
+}) {
+  const t = useTheme()
+
+  const handleToggle = (e?: any) => {
+    e?.stopPropagation?.()
+    onToggleSelection(profile.did)
+  }
+
+  if (!moderationOpts) return null
+
+  return (
+    <View
+      style={[
+        a.py_md,
+        a.px_xl,
+        a.border_t,
+        t.atoms.border_contrast_low,
+        isSelected && t.atoms.bg_contrast_25,
+      ]}>
+      <View style={[a.flex_row, a.align_center, a.gap_md]}>
+        {isSelectionMode && (
+          <Checkbox checked={isSelected} onPress={handleToggle} />
+        )}
+        <View style={[a.flex_1]}>
+          {isSelectionMode ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={handleToggle}
+              style={[a.flex_1]}>
+              <ProfileCard.Outer>
+                <ProfileCard.Header>
+                  <ProfileCard.Avatar
+                    profile={profile}
+                    moderationOpts={moderationOpts}
+                  />
+                  <ProfileCard.NameAndHandle
+                    profile={profile}
+                    moderationOpts={moderationOpts}
+                  />
+                </ProfileCard.Header>
+                <ProfileCard.Labels
+                  profile={profile}
+                  moderationOpts={moderationOpts}
+                />
+                <ProfileCard.Description profile={profile} />
+              </ProfileCard.Outer>
+            </Pressable>
+          ) : (
+            <ProfileCard.Link
+              profile={profile}
+              testID={`hiddenRepostUser-${index}`}>
+              <ProfileCard.Outer>
+                <ProfileCard.Header>
+                  <ProfileCard.Avatar
+                    profile={profile}
+                    moderationOpts={moderationOpts}
+                  />
+                  <ProfileCard.NameAndHandle
+                    profile={profile}
+                    moderationOpts={moderationOpts}
+                  />
+                </ProfileCard.Header>
+                <ProfileCard.Labels
+                  profile={profile}
+                  moderationOpts={moderationOpts}
+                />
+                <ProfileCard.Description profile={profile} />
+              </ProfileCard.Outer>
+            </ProfileCard.Link>
+          )}
+        </View>
+        {!isSelectionMode && (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => onRemove(profile.did)}
+            disabled={isRemoving}
+            style={[
+              a.p_md,
+              a.rounded_full,
+              t.atoms.bg_contrast_25,
+              isRemoving && {opacity: 0.5},
+            ]}>
+            <TrashIcon size="md" style={[t.atoms.text_contrast_high]} />
+          </Pressable>
+        )}
+      </View>
+    </View>
+  )
+}
+
 export function HiddenRepostUsersSettingsScreen({}: Props) {
   const {_} = useLingui()
   const t = useTheme()
@@ -37,155 +176,120 @@ export function HiddenRepostUsersSettingsScreen({}: Props) {
   const setMinimalShellMode = useSetMinimalShellMode()
   const hiddenRepostUsers = useHiddenRepostUsers()
   const {showRepostsFromUser} = useHiddenRepostUsersApi()
-  // Use array instead of Set for better React state tracking
-  const [selectedDids, setSelectedDids] = useState<string[]>([])
+  // Use Set for O(1) lookups, convert to array when needed
+  const [selectedDidsSet, setSelectedDidsSet] = useState<Set<string>>(new Set())
   const [isSelectionModeActive, setIsSelectionModeActive] = useState(false)
   const [isRemoving, setIsRemoving] = useState(false)
 
   // Fetch profiles for all hidden repost user DIDs
-  // Note: useProfilesQuery accepts handles but getProfiles API accepts DIDs too
   const {data: profilesData, isLoading} = useProfilesQuery({
-    handles: hiddenRepostUsers || [], // DIDs work here too
+    handles: hiddenRepostUsers || [],
     maintainData: true,
   })
 
   const profiles = useMemo(() => {
     if (!profilesData?.profiles) return []
     // Filter to only include profiles that are in our hidden list
-    return profilesData.profiles.filter(profile =>
-      hiddenRepostUsers?.includes(profile.did),
-    )
+    const hiddenSet = new Set(hiddenRepostUsers || [])
+    return profilesData.profiles.filter(profile => hiddenSet.has(profile.did))
   }, [profilesData, hiddenRepostUsers])
 
-  // Clean up selectedDids when users are removed (only when hiddenRepostUsers changes)
-  const prevHiddenRepostUsersRef = useRef(hiddenRepostUsers)
-  const isSelectionModeActiveRef = useRef(isSelectionModeActive)
-  isSelectionModeActiveRef.current = isSelectionModeActive
-
+  // Clean up selected DIDs when users are removed
   useEffect(() => {
-    const prevHidden = prevHiddenRepostUsersRef.current
-
-    // Only clean up if hiddenRepostUsers actually changed (user was removed)
-    if (
-      prevHidden &&
-      hiddenRepostUsers &&
-      prevHidden.length !== hiddenRepostUsers.length
-    ) {
-      prevHiddenRepostUsersRef.current = hiddenRepostUsers
-      // Use a function to get the current selectedDids state
-      setSelectedDids(prevSelected => {
-        if (prevSelected.length === 0) {
-          return prevSelected
+    if (!hiddenRepostUsers || hiddenRepostUsers.length === 0) {
+      setSelectedDidsSet(prev => {
+        if (prev.size > 0) {
+          setIsSelectionModeActive(false)
+          return new Set()
         }
-        const validDids = new Set(hiddenRepostUsers)
-        const filtered = prevSelected.filter(did => validDids.has(did))
-        if (filtered.length !== prevSelected.length) {
-          // If all selections were removed, exit selection mode
-          if (filtered.length === 0 && isSelectionModeActiveRef.current) {
-            setIsSelectionModeActive(false)
-          }
-          return filtered
-        }
-        return prevSelected
+        return prev
       })
-    } else {
-      prevHiddenRepostUsersRef.current = hiddenRepostUsers
+      return
     }
-  }, [hiddenRepostUsers]) // Only depend on hiddenRepostUsers, not isSelectionModeActive
+
+    const hiddenSet = new Set(hiddenRepostUsers)
+    setSelectedDidsSet(prev => {
+      const filtered = new Set(
+        Array.from(prev).filter(did => hiddenSet.has(did)),
+      )
+      // If all selections were removed, exit selection mode
+      if (filtered.size === 0 && prev.size > 0) {
+        setIsSelectionModeActive(false)
+      }
+      return filtered.size !== prev.size ? filtered : prev
+    })
+  }, [hiddenRepostUsers])
 
   const isEmpty =
     !isLoading && (!hiddenRepostUsers || hiddenRepostUsers.length === 0)
   const isSelectionMode = isSelectionModeActive
 
-  // Create a stable sorted array and string key for comparisons
-  // Compute sorted array and key directly - React will handle re-renders
-  const selectedDidsSorted = [...selectedDids].sort()
-  const selectedDidsKey = selectedDidsSorted.join(',')
-  const selectedDidsArray = selectedDidsSorted
+  // Convert Set to array for rendering and counting
+  const selectedDidsArray = useMemo(
+    () => Array.from(selectedDidsSet),
+    [selectedDidsSet],
+  )
 
   // Count only selected DIDs that actually exist in the profiles list
-  // Use selectedDidsArray for dependency to ensure recalculation when selection changes
   const validSelectedCount = useMemo(() => {
-    if (!profiles || profiles.length === 0) {
-      console.log(
-        '[HiddenRepostUsers] validSelectedCount: no profiles, returning 0',
-      )
-      return 0
-    }
-    if (selectedDidsArray.length === 0) {
-      console.log(
-        '[HiddenRepostUsers] validSelectedCount: no selectedDids, returning 0',
-      )
-      return 0
-    }
+    if (!profiles || profiles.length === 0) return 0
+    if (selectedDidsSet.size === 0) return 0
     const profileDids = new Set(profiles.map(p => p.did))
-    const valid = selectedDidsArray.filter(did => did && profileDids.has(did))
-    console.log('[HiddenRepostUsers] validSelectedCount:', {
-      selectedDids: selectedDidsArray,
-      profileDids: Array.from(profileDids),
-      valid,
-      count: valid.length,
-    })
-    return valid.length
-  }, [profiles, selectedDidsArray])
+    return Array.from(selectedDidsSet).filter(did => profileDids.has(did))
+      .length
+  }, [profiles, selectedDidsSet])
 
   useFocusEffect(
     useCallback(() => {
       setMinimalShellMode(false)
       // Clear selection when screen loses focus
       return () => {
-        setSelectedDids([])
+        setSelectedDidsSet(new Set())
         setIsSelectionModeActive(false)
       }
     }, [setMinimalShellMode]),
   )
 
-  const toggleSelection = useCallback((did: string) => {
-    console.log('[HiddenRepostUsers] toggleSelection called:', {
-      did,
-      isSelectionModeActive: isSelectionModeActiveRef.current,
-    })
-    setSelectedDids(prev => {
-      const wasSelected = prev.includes(did)
-      const next = wasSelected ? prev.filter(d => d !== did) : [...prev, did]
-      console.log('[HiddenRepostUsers] toggleSelection state update:', {
-        wasSelected,
-        prev: [...prev],
-        next: [...next],
+  const toggleSelection = useCallback(
+    (did: string) => {
+      setSelectedDidsSet(prev => {
+        const next = new Set(prev)
+        if (next.has(did)) {
+          next.delete(did)
+        } else {
+          next.add(did)
+        }
+        return next
       })
-      return next
-    })
-    // Ensure selection mode stays active - use ref to avoid dependency
-    if (!isSelectionModeActiveRef.current) {
-      console.log(
-        '[HiddenRepostUsers] toggleSelection: activating selection mode',
-      )
-      setIsSelectionModeActive(true)
-    }
-  }, [])
+      // Ensure selection mode stays active
+      if (!isSelectionModeActive) {
+        setIsSelectionModeActive(true)
+      }
+    },
+    [isSelectionModeActive],
+  )
 
   const enterSelectionMode = useCallback(() => {
-    console.log('[HiddenRepostUsers] enterSelectionMode called')
-    // Just activate selection mode without selecting any users
     setIsSelectionModeActive(true)
-    setSelectedDids([]) // Clear any stale selections
+    setSelectedDidsSet(new Set()) // Clear any stale selections
   }, [])
 
   const clearSelection = useCallback(() => {
-    setSelectedDids([])
+    setSelectedDidsSet(new Set())
     setIsSelectionModeActive(false)
   }, [])
 
   const removeSelected = useCallback(async () => {
-    if (selectedDids.length === 0) return
+    if (selectedDidsSet.size === 0) return
 
-    const count = selectedDids.length
+    const count = selectedDidsSet.size
+    const didsToRemove = Array.from(selectedDidsSet)
     setIsRemoving(true)
     try {
-      for (const did of selectedDids) {
+      for (const did of didsToRemove) {
         showRepostsFromUser({did})
       }
-      setSelectedDids([])
+      setSelectedDidsSet(new Set())
       setIsSelectionModeActive(false)
       Toast.show(
         _(
@@ -198,7 +302,7 @@ export function HiddenRepostUsersSettingsScreen({}: Props) {
     } finally {
       setIsRemoving(false)
     }
-  }, [selectedDids, showRepostsFromUser, _])
+  }, [selectedDidsSet, showRepostsFromUser, _])
 
   const removeSingle = useCallback(
     async (did: string) => {
@@ -218,134 +322,42 @@ export function HiddenRepostUsersSettingsScreen({}: Props) {
     [showRepostsFromUser, _],
   )
 
+  // Memoize extraData to ensure FlatList re-renders when selection changes
+  const listExtraData = useMemo(
+    () =>
+      `${isSelectionModeActive}-${selectedDidsArray.join(',')}-${selectedDidsSet.size}`,
+    [isSelectionModeActive, selectedDidsArray, selectedDidsSet.size],
+  )
+
+  // Key extractor
+  const keyExtractor = useCallback(
+    (item: ActorDefs.ProfileView) => item.did,
+    [],
+  )
+
   const renderItem = useCallback(
     ({item, index}: {item: ActorDefs.ProfileView; index: number}) => {
       if (!moderationOpts) return null
-      // Check selection using the current selectedDids state
-      // selectedDidsKey is in dependency array to ensure this callback updates
-      const isSelected = selectedDids.includes(item.did)
-      if (index === 0) {
-        console.log('[HiddenRepostUsers] renderItem:', {
-          itemDid: item.did,
-          selectedDids,
-          isSelected,
-          isSelectionMode,
-        })
-      }
-
       return (
-        <View
-          style={[
-            a.py_md,
-            a.px_xl,
-            a.border_t,
-            t.atoms.border_contrast_low,
-            isSelected && t.atoms.bg_contrast_25,
-          ]}
-          key={item.did}>
-          <View style={[a.flex_row, a.align_center, a.gap_md]}>
-            {isSelectionMode && (
-              <Pressable
-                accessibilityRole="button"
-                onPress={e => {
-                  e?.stopPropagation?.()
-                  toggleSelection(item.did)
-                }}
-                style={[
-                  {width: 24, height: 24},
-                  a.rounded_full,
-                  a.border,
-                  t.atoms.border_contrast_high,
-                  isSelected && t.atoms.bg,
-                  a.align_center,
-                  a.justify_center,
-                ]}>
-                {isSelected && (
-                  <CheckIcon
-                    size="sm"
-                    style={[t.atoms.text_inverted]}
-                    fill={t.atoms.text_inverted.color}
-                  />
-                )}
-              </Pressable>
-            )}
-            <View style={[a.flex_1]}>
-              {isSelectionMode ? (
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={e => {
-                    e?.stopPropagation?.()
-                    toggleSelection(item.did)
-                  }}
-                  style={[a.flex_1]}>
-                  <ProfileCard.Outer>
-                    <ProfileCard.Header>
-                      <ProfileCard.Avatar
-                        profile={item}
-                        moderationOpts={moderationOpts}
-                      />
-                      <ProfileCard.NameAndHandle
-                        profile={item}
-                        moderationOpts={moderationOpts}
-                      />
-                    </ProfileCard.Header>
-                    <ProfileCard.Labels
-                      profile={item}
-                      moderationOpts={moderationOpts}
-                    />
-                    <ProfileCard.Description profile={item} />
-                  </ProfileCard.Outer>
-                </Pressable>
-              ) : (
-                <ProfileCard.Link
-                  profile={item}
-                  testID={`hiddenRepostUser-${index}`}>
-                  <ProfileCard.Outer>
-                    <ProfileCard.Header>
-                      <ProfileCard.Avatar
-                        profile={item}
-                        moderationOpts={moderationOpts}
-                      />
-                      <ProfileCard.NameAndHandle
-                        profile={item}
-                        moderationOpts={moderationOpts}
-                      />
-                    </ProfileCard.Header>
-                    <ProfileCard.Labels
-                      profile={item}
-                      moderationOpts={moderationOpts}
-                    />
-                    <ProfileCard.Description profile={item} />
-                  </ProfileCard.Outer>
-                </ProfileCard.Link>
-              )}
-            </View>
-            {!isSelectionMode && (
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => removeSingle(item.did)}
-                disabled={isRemoving}
-                style={[
-                  a.p_md,
-                  a.rounded_full,
-                  t.atoms.bg_contrast_25,
-                  isRemoving && {opacity: 0.5},
-                ]}>
-                <TrashIcon size="md" style={[t.atoms.text_contrast_high]} />
-              </Pressable>
-            )}
-          </View>
-        </View>
+        <HiddenRepostUserItem
+          profile={item}
+          index={index}
+          isSelected={selectedDidsSet.has(item.did)}
+          isSelectionMode={isSelectionMode}
+          moderationOpts={moderationOpts}
+          onToggleSelection={toggleSelection}
+          onRemove={removeSingle}
+          isRemoving={isRemoving}
+        />
       )
     },
     [
-      moderationOpts,
-      selectedDids, // Use the array directly - React will detect reference changes
+      selectedDidsSet,
       isSelectionMode,
+      moderationOpts,
       toggleSelection,
       removeSingle,
       isRemoving,
-      t,
     ],
   )
 
@@ -378,15 +390,6 @@ export function HiddenRepostUsersSettingsScreen({}: Props) {
             )}
           </Layout.Header.Slot>
         </Layout.Header.Outer>
-        {(() => {
-          console.log('[HiddenRepostUsers] Banner render check:', {
-            isSelectionMode,
-            validSelectedCount,
-            selectedDids,
-            shouldShow: isSelectionMode,
-          })
-          return null
-        })()}
         {isSelectionMode && (
           <View
             style={[
@@ -414,11 +417,7 @@ export function HiddenRepostUsersSettingsScreen({}: Props) {
               color="negative"
               variant="solid"
               onPress={removeSelected}
-              disabled={
-                isRemoving ||
-                validSelectedCount === 0 ||
-                selectedDids.length === 0
-              }>
+              disabled={isRemoving || validSelectedCount === 0}>
               <ButtonText>
                 <Trans>Remove</Trans>
               </ButtonText>
@@ -433,11 +432,13 @@ export function HiddenRepostUsersSettingsScreen({}: Props) {
         ) : (
           <List
             data={profiles}
-            keyExtractor={item => item.did}
+            keyExtractor={keyExtractor}
             renderItem={renderItem}
             initialNumToRender={15}
             ListHeaderComponent={Info}
-            extraData={`${isSelectionModeActive}-${selectedDidsKey}`}
+            extraData={listExtraData}
+            removeClippedSubviews={false}
+            windowSize={10}
           />
         )}
       </Layout.Center>

@@ -45,6 +45,7 @@ export const router = new Router<AllNavigatableRoutes>({
   AppPasswords: '/settings/app-passwords',
   PreferencesFollowingFeed: '/settings/following-feed',
   HiddenRepostUsersSettings: '/settings/hidden-repost-users',
+  PowerSettings: '/settings/power',
   PreferencesThreads: '/settings/threads',
   PreferencesExternalEmbeds: '/settings/external-embeds',
   AccessibilitySettings: '/settings/accessibility',

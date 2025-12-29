@@ -5,7 +5,6 @@ import {
   type CommonNavigatorParams,
   type NativeStackScreenProps,
 } from '#/lib/routes/types'
-import {useHiddenRepostUsers} from '#/state/preferences/hidden-repost-users'
 import {
   usePreferencesQuery,
   useSetFeedViewPreferencesMutation,
@@ -30,8 +29,6 @@ export function FollowingFeedPreferencesScreen({}: Props) {
   const {data: preferences} = usePreferencesQuery()
   const {mutate: setFeedViewPref, variables} =
     useSetFeedViewPreferencesMutation()
-  const hiddenRepostUsers = useHiddenRepostUsers()
-  const hasHiddenUsers = hiddenRepostUsers && hiddenRepostUsers.length > 0
 
   const showReplies = !(
     variables?.hideReplies ?? preferences?.feedViewPrefs?.hideReplies
@@ -122,24 +119,6 @@ export function FollowingFeedPreferencesScreen({}: Props) {
               <Toggle.Platform />
             </SettingsList.Item>
           </Toggle.Item>
-          <SettingsList.LinkItem
-            to="/settings/hidden-repost-users"
-            label={_(msg`Manage hidden repost users`)}>
-            <SettingsList.ItemIcon icon={RepostIcon} />
-            <SettingsList.ItemText>
-              <Trans>Manage hidden repost users</Trans>
-            </SettingsList.ItemText>
-            {hasHiddenUsers && (
-              <SettingsList.ItemText
-                style={[a.text_sm, a.text_contrast_medium]}>
-                {hiddenRepostUsers.length === 1 ? (
-                  <Trans>1 user</Trans>
-                ) : (
-                  <Trans>{hiddenRepostUsers.length} users</Trans>
-                )}
-              </SettingsList.ItemText>
-            )}
-          </SettingsList.LinkItem>
           <SettingsList.Divider />
           <SettingsList.Group>
             <SettingsList.ItemIcon icon={BeakerIcon} />

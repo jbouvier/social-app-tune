@@ -124,6 +124,7 @@ import {QuoteNotificationSettingsScreen} from '#/screens/Settings/NotificationSe
 import {ReplyNotificationSettingsScreen} from '#/screens/Settings/NotificationSettings/ReplyNotificationSettings'
 import {RepostNotificationSettingsScreen} from '#/screens/Settings/NotificationSettings/RepostNotificationSettings'
 import {RepostsOnRepostsNotificationSettingsScreen} from '#/screens/Settings/NotificationSettings/RepostsOnRepostsNotificationSettings'
+import {PowerSettingsScreen} from '#/screens/Settings/PowerSettings'
 import {PrivacyAndSecuritySettingsScreen} from '#/screens/Settings/PrivacyAndSecuritySettings'
 import {SettingsScreen} from '#/screens/Settings/Settings'
 import {ThreadPreferencesScreen} from '#/screens/Settings/ThreadPreferences'
@@ -371,6 +372,14 @@ function commonScreens(Stack: typeof Flat, unreadCountLabel?: string) {
         getComponent={() => HiddenRepostUsersSettingsScreen}
         options={{
           title: title(msg`Hidden Repost Users`),
+          requireAuth: true,
+        }}
+      />
+      <Stack.Screen
+        name="PowerSettings"
+        getComponent={() => PowerSettingsScreen}
+        options={{
+          title: title(msg`Power Settings`),
           requireAuth: true,
         }}
       />
