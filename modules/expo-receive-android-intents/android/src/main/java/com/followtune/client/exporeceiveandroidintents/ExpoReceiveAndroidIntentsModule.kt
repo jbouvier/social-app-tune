@@ -1,4 +1,4 @@
-package xyz.blueskyweb.app.exporeceiveandroidintents
+package com.followtune.client.exporeceiveandroidintents
 
 import android.content.Intent
 import android.graphics.Bitmap

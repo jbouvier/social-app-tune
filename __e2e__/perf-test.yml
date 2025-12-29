@@ -1,6 +1,6 @@
 # flow.yaml
 
-appId: xyz.blueskyweb.app
+appId: com.followtune.client
 ---
 - launchApp
 # Login

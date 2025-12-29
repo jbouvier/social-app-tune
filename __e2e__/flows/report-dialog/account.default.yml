@@ -1,4 +1,4 @@
-appId: xyz.blueskyweb.app
+appId: com.followtune.client
 ---
 - runScript:
     file: ../../setupServer.js
