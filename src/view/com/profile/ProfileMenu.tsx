@@ -15,6 +15,7 @@ import {logger} from '#/logger'
 import {isWeb} from '#/platform/detection'
 import {type Shadow} from '#/state/cache/types'
 import {useModalControls} from '#/state/modals'
+import {useHiddenRepostUsersApi} from '#/state/preferences/hidden-repost-users'
 import {
   RQKEY as profileQueryKey,
   useProfileBlockMutationQueue,
@@ -34,6 +35,8 @@ import {CircleCheck_Stroke2_Corner0_Rounded as CircleCheckIcon} from '#/componen
 import {CircleX_Stroke2_Corner0_Rounded as CircleXIcon} from '#/components/icons/CircleX'
 import {Clipboard_Stroke2_Corner2_Rounded as ClipboardIcon} from '#/components/icons/Clipboard'
 import {DotGrid_Stroke2_Corner0_Rounded as Ellipsis} from '#/components/icons/DotGrid'
+import {Eye_Stroke2_Corner0_Rounded as Eye} from '#/components/icons/Eye'
+import {EyeSlash_Stroke2_Corner0_Rounded as EyeSlash} from '#/components/icons/EyeSlash'
 import {Flag_Stroke2_Corner0_Rounded as Flag} from '#/components/icons/Flag'
 import {ListSparkle_Stroke2_Corner0_Rounded as List} from '#/components/icons/ListSparkle'
 import {Live_Stroke2_Corner0_Rounded as LiveIcon} from '#/components/icons/Live'
@@ -86,6 +89,8 @@ let ProfileMenu = ({
     profile,
     'ProfileMenu',
   )
+  const {hideRepostsFromUser, showRepostsFromUser, isRepostHidden} =
+    useHiddenRepostUsersApi()
 
   const blockPromptControl = Prompt.usePromptControl()
   const loggedOutWarningPromptControl = Prompt.usePromptControl()
@@ -370,6 +375,48 @@ let ProfileMenu = ({
                   ))}
                 {!isSelf && (
                   <>
+                    {(() => {
+                      const profileName =
+                        profile.displayName || profile.handle || 'this user'
+                      const isRepostFromHiddenUser = isRepostHidden(profile.did)
+                      return (
+                        <Menu.Item
+                          testID="profileHeaderDropdownHideRepostsBtn"
+                          label={
+                            isRepostFromHiddenUser
+                              ? _(msg`Show reposts from ${profileName}`)
+                              : _(msg`Hide reposts from ${profileName}`)
+                          }
+                          onPress={() => {
+                            if (isRepostFromHiddenUser) {
+                              showRepostsFromUser({did: profile.did})
+                              Toast.show(
+                                _(
+                                  msg`Reposts from ${profileName} will now be shown`,
+                                ),
+                              )
+                            } else {
+                              hideRepostsFromUser({did: profile.did})
+                              Toast.show(
+                                _(
+                                  msg`Reposts from ${profileName} will now be hidden`,
+                                ),
+                              )
+                            }
+                          }}>
+                          <Menu.ItemText>
+                            {isRepostFromHiddenUser ? (
+                              <Trans>Show reposts from {profileName}</Trans>
+                            ) : (
+                              <Trans>Hide reposts from {profileName}</Trans>
+                            )}
+                          </Menu.ItemText>
+                          <Menu.ItemIcon
+                            icon={isRepostFromHiddenUser ? Eye : EyeSlash}
+                          />
+                        </Menu.Item>
+                      )
+                    })()}
                     {!profile.viewer?.blocking &&
                       !profile.viewer?.mutedByList && (
                         <Menu.Item
