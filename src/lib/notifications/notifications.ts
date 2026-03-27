@@ -38,7 +38,7 @@ async function _registerPushToken({
         : PUBLIC_APPVIEW_DID,
       platform: Platform.OS,
       token: token.data,
-      appId: 'com.followtune.client',
+      appId: 'com.goonthesky.app',
       ageRestricted: extra.ageRestricted ?? false,
     }
 

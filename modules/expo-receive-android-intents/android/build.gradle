@@ -2,7 +2,7 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'maven-publish'
 
-group = 'com.followtune.client.exporeceiveandroidintents'
+group = 'com.goonthesky.app.exporeceiveandroidintents'
 version = '0.4.1'
 
 buildscript {
@@ -62,7 +62,7 @@ android {
     jvmTarget = "17"
   }
 
-  namespace "com.followtune.client.exporeceiveandroidintents"
+  namespace "com.goonthesky.app.exporeceiveandroidintents"
   defaultConfig {
     minSdkVersion safeExtGet("minSdkVersion", 21)
     targetSdkVersion safeExtGet("targetSdkVersion", 34)

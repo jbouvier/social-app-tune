@@ -1,6 +1,6 @@
 # flow.yaml
 
-appId: com.followtune.client
+appId: com.goonthesky.app
 ---
 - launchApp
 # Login

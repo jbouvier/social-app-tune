@@ -10,11 +10,11 @@
       <string>$(PRODUCT_MODULE_NAME).NotificationService</string>
     </dict>
     <key>MainAppScheme</key>
-    <string>bluesky</string>
+    <string>goonthesky</string>
     <key>CFBundleName</key>
     <string>$(PRODUCT_NAME)</string>
     <key>CFBundleDisplayName</key>
-    <string>Bluesky Notifications</string>
+    <string>Go On The Sky Notifications</string>
     <key>CFBundleIdentifier</key>
     <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
     <key>CFBundleVersion</key>

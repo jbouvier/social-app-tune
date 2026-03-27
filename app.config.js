@@ -18,6 +18,9 @@ module.exports = function (_config) {
   const IS_DEV = !IS_TESTFLIGHT || !IS_PRODUCTION
 
   const ASSOCIATED_DOMAINS = [
+    'applinks:goonthesky.com',
+    'appclips:goonthesky.com',
+    // Keep production Bluesky deep links functional for compatibility.
     'applinks:bsky.app',
     'applinks:staging.bsky.app',
     'appclips:bsky.app',
@@ -33,10 +36,10 @@ module.exports = function (_config) {
   return {
     expo: {
       version: VERSION,
-      name: 'Nimbolta',
-      slug: 'nimbolta',
-      scheme: 'nimbolta',
-      owner: 'nimbolta',
+      name: 'Go On The Sky',
+      slug: 'go-on-the-sky',
+      scheme: 'goonthesky',
+      owner: 'goonthesky',
       runtimeVersion: {
         policy: 'appVersion',
       },
@@ -46,7 +49,7 @@ module.exports = function (_config) {
       newArchEnabled: false,
       ios: {
         supportsTablet: false,
-        bundleIdentifier: 'com.followtune.client',
+        bundleIdentifier: 'com.goonthesky.app',
         config: {
           usesNonExemptEncryption: false,
         },
@@ -64,7 +67,7 @@ module.exports = function (_config) {
             'Used to save images to your library.',
           NSPhotoLibraryUsageDescription:
             'Used for profile pictures, posts, and other kinds of content',
-          CFBundleSpokenName: 'Nimbolta',
+          CFBundleSpokenName: 'Go On The Sky',
           CFBundleLocalizations: [
             'en',
             'an',
@@ -113,7 +116,7 @@ module.exports = function (_config) {
         entitlements: {
           'com.apple.developer.kernel.increased-memory-limit': true,
           'com.apple.developer.kernel.extended-virtual-addressing': true,
-          'com.apple.security.application-groups': 'group.app.bsky',
+          'com.apple.security.application-groups': 'group.com.goonthesky.app',
         },
         privacyManifests: {
           NSPrivacyCollectedDataTypes: [
@@ -182,7 +185,7 @@ module.exports = function (_config) {
           backgroundColor: '#006AFF',
         },
         googleServicesFile: './google-services.json',
-        package: 'com.followtune.client',
+        package: 'com.goonthesky.app',
         intentFilters: [
           {
             action: 'VIEW',
@@ -190,7 +193,7 @@ module.exports = function (_config) {
             data: [
               {
                 scheme: 'https',
-                host: 'bsky.app',
+                host: 'goonthesky.com',
               },
               IS_DEV && {
                 scheme: 'http',
@@ -205,7 +208,7 @@ module.exports = function (_config) {
         favicon: './assets/favicon.png',
       },
       updates: {
-        url: 'https://updates.followtune.com/manifest',
+        url: 'https://goonthesky.com/manifest',
         enabled: UPDATES_ENABLED,
         fallbackToCacheTimeout: 30000,
         codeSigningCertificate: UPDATES_ENABLED
@@ -230,7 +233,7 @@ module.exports = function (_config) {
         USE_SENTRY && [
           '@sentry/react-native/expo',
           {
-            organization: 'nimbolta',
+            organization: 'goonthesky',
             project: 'app',
             url: 'https://sentry.io',
           },
@@ -405,26 +408,25 @@ module.exports = function (_config) {
                 appExtensions: [
                   {
                     targetName: 'Share-with-Bluesky',
-                    bundleIdentifier:
-                      'com.followtune.client.Share-with-Bluesky',
+                    bundleIdentifier: 'com.goonthesky.app.Share-with-Bluesky',
                     entitlements: {
                       'com.apple.security.application-groups': [
-                        'group.app.bsky',
+                        'group.com.goonthesky.app',
                       ],
                     },
                   },
                   {
                     targetName: 'BlueskyNSE',
-                    bundleIdentifier: 'com.followtune.client.BlueskyNSE',
+                    bundleIdentifier: 'com.goonthesky.app.BlueskyNSE',
                     entitlements: {
                       'com.apple.security.application-groups': [
-                        'group.app.bsky',
+                        'group.com.goonthesky.app',
                       ],
                     },
                   },
                   {
                     targetName: 'BlueskyClip',
-                    bundleIdentifier: 'com.followtune.client.AppClip',
+                    bundleIdentifier: 'com.goonthesky.app.AppClip',
                   },
                 ],
               },

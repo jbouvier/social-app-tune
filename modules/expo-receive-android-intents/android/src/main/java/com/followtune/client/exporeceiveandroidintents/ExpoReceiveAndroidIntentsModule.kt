@@ -1,4 +1,4 @@
-package com.followtune.client.exporeceiveandroidintents
+package com.goonthesky.app.exporeceiveandroidintents
 
 import android.content.Intent
 import android.graphics.Bitmap

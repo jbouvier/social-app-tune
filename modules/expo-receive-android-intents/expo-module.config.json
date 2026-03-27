@@ -1,6 +1,6 @@
 {
   "platforms": ["android"],
   "android": {
-    "modules": ["com.followtune.client.exporeceiveandroidintents.ExpoReceiveAndroidIntentsModule"]
+    "modules": ["com.goonthesky.app.exporeceiveandroidintents.ExpoReceiveAndroidIntentsModule"]
   }
 }
