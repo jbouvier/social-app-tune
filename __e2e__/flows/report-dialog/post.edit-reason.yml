@@ -1,4 +1,4 @@
-appId: com.followtune.client
+appId: com.goonthesky.app
 ---
 - runScript:
     file: ../../setupServer.js

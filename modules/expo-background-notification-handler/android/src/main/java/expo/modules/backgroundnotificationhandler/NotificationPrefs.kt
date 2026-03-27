@@ -18,7 +18,7 @@ class NotificationPrefs(
   private val context: Context?,
 ) {
   private val prefs =
-    context?.getSharedPreferences("com.followtune.client", Context.MODE_PRIVATE)
+    context?.getSharedPreferences("com.goonthesky.app", Context.MODE_PRIVATE)
       ?: throw Error("Context is null")
 
   fun initialize() {

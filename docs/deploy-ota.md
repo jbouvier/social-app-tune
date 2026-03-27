@@ -60,12 +60,12 @@ values you found in **Step 1**.
 ```sh
 > npx eas build:version:set -p ios
 >
-> Project @blueskysocial/bluesky with bundle identifier "com.followtune.client" is configured with buildNumber 1011.
+> Project @goonthesky/go-on-the-sky with bundle identifier "com.goonthesky.app" is configured with buildNumber 1011.
 > ✔ What version would you like to set? … 1009
 >
 > npx eas build:version:set -p android
 >
-> Project @blueskysocial/bluesky with application ID "com.followtune.client" is configured with versionCode 641.
+> Project @goonthesky/go-on-the-sky with application ID "com.goonthesky.app" is configured with versionCode 641.
 > ✔ What version would you like to set? … 639  
 ```
 
@@ -124,12 +124,12 @@ to reset the build numbers.
 ```sh
 > npx eas build:version:set -p ios
 >
-> Project @blueskysocial/bluesky with bundle identifier "com.followtune.client" is configured with buildNumber 1009.
+> Project @goonthesky/go-on-the-sky with bundle identifier "com.goonthesky.app" is configured with buildNumber 1009.
 > ✔ What version would you like to set? … 1011
 >
 > npx eas build:version:set -p android
 >
-> Project @blueskysocial/bluesky with application ID "com.followtune.client" is configured with versionCode 639.
+> Project @goonthesky/go-on-the-sky with application ID "com.goonthesky.app" is configured with versionCode 639.
 > ✔ What version would you like to set? … 641
 ```
 

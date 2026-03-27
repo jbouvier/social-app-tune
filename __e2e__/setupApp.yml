@@ -1,7 +1,7 @@
-appId: com.followtune.client
+appId: com.goonthesky.app
 ---
 - launchApp:
-    appId: "com.followtune.client"
+    appId: "com.goonthesky.app"
     clearState: true
 - waitForAnimationToEnd
 - tapOn: "http://localhost:8081"
